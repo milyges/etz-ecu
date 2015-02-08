@@ -1,0 +1,15 @@
+*.o
+*.d
+*.elf
+*.hex
+*.eep
+*.bin
+*.sym
+*.user
+*.b#?
+*.s#?
+*.map
+*.lss
+moc_*.h
+moc_*.cpp
+build-diag-app-*/*
