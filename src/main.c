@@ -57,6 +57,7 @@ static uint16_t _last_half_time_idx = 0; /* Ostatni czas 1/2 obrotu */
 static uint16_t _half_time = 0; /* Uśredniony czas 1/2 obrotu */
 static uint8_t _ignition_cut_off = 0; /* Zapłon odcięty (zbyt wysokie obroty) */
 static uint8_t _dynamic_timming = 0; /* Dunamiczna mapa zapłonu włączona */
+static uint16_t _stop_timer = 0; /* "Zegarek" liczący jak długo wał się nie kręci */
 
 /* Obliczenia wykonywane w GMP i DMP */
 static inline void _crank_isr_common(void) {
@@ -69,6 +70,7 @@ static inline void _crank_isr_common(void) {
 	TCNT1 = 0; /* Zerujemy timer0 */	
 	
 	if (!_half_time) { /* Wał rusza */
+		_stop_timer = 0;
 		_half_time = _half_times[_last_half_time_idx];
 		for(i = 0; i < LAST_ROTATION_TIMES; i++)
 			_half_times[i] = _half_time;
@@ -85,8 +87,8 @@ static inline void _crank_isr_common(void) {
 	}
 }
 
-/* INT0 - przerwanie z czujnika położeniu wału (wał w GMP) */
-ISR(INT0_vect) {
+/* INT1 - przerwanie z czujnika położeniu wału (wał w GMP) */
+ISR(INT1_vect) {
 	TCNT3 = 0;
 	if (IGN_COIL_STATE()) {
 		IGN_COIL_OFF(); /* Wyłączamy zasilanie cewki zapłonowej (jeżeli nie było iskry wcześniej - zapłon na pewno nie wypadnie) */
@@ -120,8 +122,8 @@ ISR(INT0_vect) {
 	}
 }
 
-/* INT1 - przerwanie z czujnika położeniu wału (wał w DMP) */
-ISR(INT1_vect) {
+/* INT0 - przerwanie z czujnika położeniu wału (wał w DMP) */
+ISR(INT0_vect) {
 	uint32_t tmp;
 	
 	_crank_isr_common();
@@ -149,8 +151,12 @@ ISR(INT1_vect) {
 	TCNT3 += TCNT1; /* Korekta o czas wykonywania kodu przerwania */
 }
 
-ISR(TIMER1_OVF_vect) { /* Przepełnia się gdy nie ma impulsu (wał się nie kręci) */	
-	IGN_COIL_OFF(); /* Wyłączamy zasilanie cewki, aby nie marnowała prądu */
+ISR(TIMER1_OVF_vect) { /* Przepełnia się gdy nie ma impulsu (wał się nie kręci) */
+	_stop_timer++; /* Zwiększamy timer stopu */
+	
+	if (_stop_timer > 10) { /* Po kilkunastu sekundach wyłączamy zasilanie cewki, aby nie marnowała prądu i się nie grzała niepotrzebnie */
+		IGN_COIL_OFF(); 
+	}
 	
 	_half_time = 0;
 	__rpm = 0;
@@ -219,6 +225,7 @@ void init(void) {
 	sei();
 }
 
+#if 0
 int16_t read_temp(void) {
 	uint32_t data = 0;
 	
@@ -251,7 +258,7 @@ void read_throttle_state(void) {
 	data = ADC;
 	__throttle_state = data;
 }
-
+#endif
 int main(void) {	
 	_delay_ms(100);
 	
