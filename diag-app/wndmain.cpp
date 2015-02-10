@@ -185,7 +185,7 @@ void WndMain::_writeEcuMap() {
 
     //qDebug() << command;
 
-    if (!_ecuCommand(command.toAscii(), &exitCode, NULL)) {
+    if (!_ecuCommand(command.toLocal8Bit(), &exitCode, NULL)) {
         QMessageBox::critical(this, "Zapis mapy do ECU", QString::fromUtf8("Błąd zapisu danych do ECU (timeout podczas wykonywania polecenia)"));
         return;
     }
@@ -253,7 +253,7 @@ void WndMain::_writeImmoKeys() {
     uint8_t err;
     QByteArray command;
 
-    command = QString("i%1 %2\r\n").arg(_ui->leImmoKey0->text(), 12, '0').arg(_ui->leImmoKey1->text(), 12, '0').toAscii();
+    command = QString("i%1 %2\r\n").arg(_ui->leImmoKey0->text(), 12, '0').arg(_ui->leImmoKey1->text(), 12, '0').toLocal8Bit();
 
     if (!_ecuCommand(command, &err, NULL)) {
         QMessageBox::critical(this, QString::fromUtf8("Zapis kodów immobilizera do ECU"), QString::fromUtf8("Błąd zapisu danych do ECU (timeout)"));
@@ -322,7 +322,7 @@ uint16_t WndMain::_readEcuParam(int id) {
     uint8_t err;
     QByteArray data;
 
-    if (!_ecuCommand(QString("g%1\r\n").arg(id, 2, 16, QLatin1Char('0')).toAscii(), &err, &data)) {
+    if (!_ecuCommand(QString("g%1\r\n").arg(id, 2, 16, QLatin1Char('0')).toLocal8Bit(), &err, &data)) {
         QMessageBox::critical(this, "Odczyt parametru", QString::fromUtf8("Błąd odczytu parametru %1 z ECU (timeout)").arg(id));
         return 0xFFFF;
     }
@@ -338,7 +338,7 @@ uint16_t WndMain::_readEcuParam(int id) {
 void WndMain::_writeEcuParam(int id, uint16_t value) {
     uint8_t err;
 
-    if (!_ecuCommand(QString("s%1%2\r\n").arg(id, 2, 16, QLatin1Char('0')).arg(value, 4, 16, QLatin1Char('0')).toAscii(), &err, NULL)) {
+    if (!_ecuCommand(QString("s%1%2\r\n").arg(id, 2, 16, QLatin1Char('0')).arg(value, 4, 16, QLatin1Char('0')).toLocal8Bit(), &err, NULL)) {
         QMessageBox::critical(this, "Zapis parametru", QString::fromUtf8("Błąd zapisu parametru %1 do ECU (kod błędu = %2)").arg(id).arg(err));
         return;
     }
