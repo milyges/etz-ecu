@@ -222,6 +222,10 @@ void WndMain::_readParams() {
     if (data != 0xFFFF)
         _ui->cbImmoEnabled->setChecked(data != 0);
 
+    data = _readEcuParam(PARAM_CRANK_OFFSET);
+    if (data != 0xFFFF)
+        _ui->sbOffset->setValue(data);
+
     _readImmoKeys();
 }
 
@@ -232,6 +236,7 @@ void WndMain::_writeParams() {
     _writeEcuParam(PARAM_DYNAMIC_OFF, _ui->sbDynamicOff->value());
     _writeEcuParam(PARAM_CURRENT_MAP, _ui->cbCurrentMap->currentIndex());
     _writeEcuParam(PARAM_IMMO_ENABLED, _ui->cbImmoEnabled->isChecked() ? 1 : 0);
+    _writeEcuParam(PARAM_CRANK_OFFSET, _ui->sbOffset->value());
 
     _writeImmoKeys();
 }

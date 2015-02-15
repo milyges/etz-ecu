@@ -270,7 +270,7 @@
            </property>
           </widget>
          </item>
-         <item row="4" column="0">
+         <item row="6" column="0">
           <widget class="QLabel" name="label_12">
            <property name="font">
             <font>
@@ -282,7 +282,7 @@
            </property>
           </widget>
          </item>
-         <item row="5" column="0">
+         <item row="7" column="0">
           <widget class="QLabel" name="label_13">
            <property name="font">
             <font>
@@ -294,7 +294,7 @@
            </property>
           </widget>
          </item>
-         <item row="5" column="1">
+         <item row="7" column="1">
           <widget class="QLineEdit" name="leImmoKey0">
            <property name="inputMask">
             <string>HHHHHHHHHHHH; </string>
@@ -307,7 +307,7 @@
            </property>
           </widget>
          </item>
-         <item row="6" column="0">
+         <item row="8" column="0">
           <widget class="QLabel" name="label_14">
            <property name="font">
             <font>
@@ -319,7 +319,7 @@
            </property>
           </widget>
          </item>
-         <item row="6" column="1">
+         <item row="8" column="1">
           <widget class="QLineEdit" name="leImmoKey1">
            <property name="inputMask">
             <string>HHHHHHHHHHHH; </string>
@@ -332,21 +332,21 @@
            </property>
           </widget>
          </item>
-         <item row="9" column="1">
+         <item row="11" column="1">
           <widget class="QPushButton" name="pbWriteParams">
            <property name="text">
             <string>Wyślij do ECU</string>
            </property>
           </widget>
          </item>
-         <item row="9" column="0">
+         <item row="11" column="0">
           <widget class="QPushButton" name="pbReadParams">
            <property name="text">
             <string>Pobierz z ECU</string>
            </property>
           </widget>
          </item>
-         <item row="4" column="1">
+         <item row="6" column="1">
           <widget class="QComboBox" name="cbCurrentMap">
            <item>
             <property name="text">
@@ -370,7 +370,7 @@
            </item>
           </widget>
          </item>
-         <item row="7" column="0">
+         <item row="9" column="0">
           <widget class="QLabel" name="label_4">
            <property name="font">
             <font>
@@ -382,7 +382,7 @@
            </property>
           </widget>
          </item>
-         <item row="7" column="1">
+         <item row="9" column="1">
           <widget class="QCheckBox" name="cbImmoEnabled">
            <property name="font">
             <font>
@@ -390,7 +390,29 @@
             </font>
            </property>
            <property name="text">
-            <string> </string>
+            <string/>
+           </property>
+          </widget>
+         </item>
+         <item row="4" column="0">
+          <widget class="QLabel" name="label_6">
+           <property name="font">
+            <font>
+             <pointsize>12</pointsize>
+            </font>
+           </property>
+           <property name="text">
+            <string>Offset czujnika położenia wału:</string>
+           </property>
+          </widget>
+         </item>
+         <item row="4" column="1">
+          <widget class="QSpinBox" name="sbOffset">
+           <property name="suffix">
+            <string>°</string>
+           </property>
+           <property name="maximum">
+            <number>90</number>
            </property>
           </widget>
          </item>

@@ -114,11 +114,11 @@ ISR(INT1_vect) {
 	}
 
 	if ((_ignition_cut_off) || (!_dynamic_timming)) {
-		__timming_advance = 0;
+		__timming_advance = __params[PARAM_CRANK_OFFSET];
 	}
 	else {
 		/* Obliczamy rzeczywiste wyprzedzenie zapłonu (do celów informacyjnych) */
-		__timming_advance = 180UL * (_half_time - _coil_off_time) / _half_time;
+		__timming_advance = (180UL * (_half_time - _coil_off_time) / _half_time) + __params[PARAM_CRANK_OFFSET];
 	}
 }
 
@@ -138,8 +138,13 @@ ISR(INT0_vect) {
 		
 		if (_dynamic_timming) { /* Mapa zapłonu włączona */
 			/* Obliczamy kiedy ma być iskra */
-			tmp = ((uint32_t)(_half_time + __crank_acceleration) * (uint32_t)__ignition_map[__params[PARAM_CURRENT_MAP]][__rpm / 500]) / 180UL;
-			TCNT3 = 0xFFFF - _half_time - __crank_acceleration + tmp;
+			if (__ignition_map[__params[PARAM_CURRENT_MAP]][__rpm / 500] <= __params[PARAM_CRANK_OFFSET]) { /* wyprzedzenie mniejsze niż bazowe - nie jesteśmy w stanie tego zrobić */
+				TCNT3 = 0;
+			}
+			else {
+				tmp = ((uint32_t)(_half_time + __crank_acceleration) * (uint32_t)(__ignition_map[__params[PARAM_CURRENT_MAP]][__rpm / 500] - __params[PARAM_CRANK_OFFSET])) / 180UL;
+				TCNT3 = 0xFFFF - _half_time - __crank_acceleration + tmp;
+			}
 		}
 		else {
 			TCNT3 = 0;
