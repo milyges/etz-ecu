@@ -332,14 +332,14 @@
            </property>
           </widget>
          </item>
-         <item row="7" column="1">
+         <item row="9" column="1">
           <widget class="QPushButton" name="pbWriteParams">
            <property name="text">
             <string>Wyślij do ECU</string>
            </property>
           </widget>
          </item>
-         <item row="7" column="0">
+         <item row="9" column="0">
           <widget class="QPushButton" name="pbReadParams">
            <property name="text">
             <string>Pobierz z ECU</string>
@@ -368,6 +368,30 @@
              <string>4</string>
             </property>
            </item>
+          </widget>
+         </item>
+         <item row="7" column="0">
+          <widget class="QLabel" name="label_4">
+           <property name="font">
+            <font>
+             <pointsize>12</pointsize>
+            </font>
+           </property>
+           <property name="text">
+            <string>Immobilizer włączony:</string>
+           </property>
+          </widget>
+         </item>
+         <item row="7" column="1">
+          <widget class="QCheckBox" name="cbImmoEnabled">
+           <property name="font">
+            <font>
+             <pointsize>12</pointsize>
+            </font>
+           </property>
+           <property name="text">
+            <string> </string>
+           </property>
           </widget>
          </item>
         </layout>

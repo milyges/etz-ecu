@@ -5,6 +5,7 @@
 #include <stdint.h>
 #include <string.h>
 #include "immo.h"
+#include "params.h"
 
 #define IMMO_LIGHT_DDR      DDRB
 #define IMMO_LIGHT_PORT     PORTB
@@ -70,6 +71,12 @@ void immo_init(void) {
 	UBRR1H = (USART_UBR >> 8);
 	UBRR1L = USART_UBR & 0xFF;
 	
-	__immo_locked = 1;
-	IMMO_LIGHT_ON();
+	if (__params[PARAM_IMMO_ENABLED]) {
+		__immo_locked = 1;
+		IMMO_LIGHT_ON();
+	}
+	else {
+		__immo_locked = 0;
+		IMMO_LIGHT_OFF();
+	}
 }

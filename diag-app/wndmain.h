@@ -12,7 +12,9 @@
 #define PARAM_DYNAMIC_ON         2
 #define PARAM_DYNAMIC_OFF        3
 #define PARAM_CURRENT_MAP        4
-#define PARAM_COUNT              5
+#define PARAM_IMMO_ENABLED       5
+#define PARAM_ZERO_ANGLE         6
+#define PARAM_COUNT              7
 
 namespace Ui {
     class WndMain;

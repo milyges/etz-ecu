@@ -193,14 +193,14 @@ void init(void) {
 	THROTTLE_DDR &= ~(1 << THROTTLE_PINNO);	
 	DIDR2 |= (1 << ADC9D) | (1 << ADC8D);
 	
-	/* Inicjalizacja interfejsu USB */
-	interface_init();
-
-	/* Inicjalizacja immobilizera */
-	immo_init();
-	
 	/* Parametry modułu */
 	params_init();
+	
+	/* Inicjalizacja interfejsu USB */
+	interface_init();
+	
+	/* Inicjalizacja immobilizera */
+	immo_init();	
 	
 	/* Mapa zapłonu */
 	map_init();

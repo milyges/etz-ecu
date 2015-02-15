@@ -218,6 +218,10 @@ void WndMain::_readParams() {
     if (data < _ui->cbCurrentMap->count())
         _ui->cbCurrentMap->setCurrentIndex(data);
 
+    data = _readEcuParam(PARAM_IMMO_ENABLED);
+    if (data != 0xFFFF)
+        _ui->cbImmoEnabled->setChecked(data != 0);
+
     _readImmoKeys();
 }
 
@@ -227,6 +231,7 @@ void WndMain::_writeParams() {
     _writeEcuParam(PARAM_DYNAMIC_ON, _ui->sbDynamicOn->value());
     _writeEcuParam(PARAM_DYNAMIC_OFF, _ui->sbDynamicOff->value());
     _writeEcuParam(PARAM_CURRENT_MAP, _ui->cbCurrentMap->currentIndex());
+    _writeEcuParam(PARAM_IMMO_ENABLED, _ui->cbImmoEnabled->isChecked() ? 1 : 0);
 
     _writeImmoKeys();
 }
