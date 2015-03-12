@@ -86,9 +86,6 @@ void WndMain::_ecuDisconnected() {
 }
 
 void WndMain::_scanPorts() {
-    static int num = 0;
-    qDebug() << "num = " << ++num;
-
     foreach (const QSerialPortInfo &info, QSerialPortInfo::availablePorts()) {
         if (info.description() == "MZ ETZ ECU") {
             _ui->statusBar->showMessage(QString::fromUtf8("Znaleziono ECU na porcie: %1, próba połączenia...").arg(info.portName()));
