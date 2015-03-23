@@ -2,6 +2,7 @@
 #include <avr/interrupt.h>
 #include <avr/power.h>
 #include <avr/wdt.h>
+#include <avr/eeprom.h>
 #include <util/delay.h>
 #include <stdint.h>
 #include <string.h>
@@ -228,6 +229,10 @@ void init(void) {
 	TIMSK3 |= (1 << TOIE3);
 
 	sei();
+}
+
+void write_to_eeprom(void) {
+	
 }
 
 #if 0
