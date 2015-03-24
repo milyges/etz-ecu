@@ -52,7 +52,7 @@ static uint8_t _ee_odometer_meters EEMEM;
 static uint32_t _ee_trip EEMEM;
 
 static uint16_t _imps;
-static uint8_t _speed;
+static uint16_t _speed;
 
 static uint16_t _imp_times[4];
 static uint8_t _last_time_idx;
@@ -79,10 +79,10 @@ ISR(TIMER0_OVF_vect) {
 
 ISR(TIMER1_OVF_vect) {
 	_speed = 0;
-	_imp_times[0] = 0;
-	_imp_times[1] = 0;
-	_imp_times[2] = 0;
-	_imp_times[3] = 0;
+	_imp_times[0] = 0xFFFF;
+	_imp_times[1] = 0xFFFF;
+	_imp_times[2] = 0xFFFF;
+	_imp_times[3] = 0xFFFF;
 	_stopped = 1;
 }
 
@@ -92,14 +92,19 @@ ISR(INT0_vect) {
 
 ISR(INT1_vect) {
 	_imps++;
-		
-	/* Nie zapisujemy jak dopiero ruszamy bo wychodza pierdoły */
+	
+	/* Nie zapisujemy jak dopiero ruszamy bo wychodza pierdoły */	 
 	if (!_stopped) {
 		_last_time_idx = (_last_time_idx + 1) % 4;
-		_imp_times[_last_time_idx] = TCNT1 - 0x80;
+		_imp_times[_last_time_idx] = TCNT1;
+		
+		/* Jakieś gówno, 300j jest przy > 140km/h  */
+		if (_imp_times[_last_time_idx] < 300) 
+			_imp_times[_last_time_idx] = 0xFFFF;
 	}
+	
 	_stopped = 0;
-	TCNT1 = 0x80;
+	TCNT1 = 0;
 	
 	if (_imps >= IMPS_PER_100M) {
 		_odometer_meters++;
@@ -250,10 +255,9 @@ static uint8_t _speed2angle[] = {
 };
 
 int main(void) {	
-	char display_buf[9];// = "      KM";
-	//char trip_buf[9];// = "      KM";
+	char display_buf[9];
 	char tmpbuf[7];
-	uint16_t imp_time;
+	uint32_t imp_time;
 
 	init();
 	display_init();
@@ -266,7 +270,7 @@ int main(void) {
 		/* Obliczanie prędkości */
 		imp_time = (_imp_times[0] + _imp_times[1] + _imp_times[2] + _imp_times[3]) / 4;
 		
-		if (!imp_time) {
+		if ((!imp_time) || (_stopped)) {
 			_speed = 0;
 		}
 		else {
@@ -275,19 +279,20 @@ int main(void) {
 		}
 		
 		/* Obliczamy wychylenie wskazowki */
-		char i = _speed / 10;
-		char j = _speed % 10;
-		char delta = (_speed2angle[i + 1] - _speed2angle[i]);
+		uint8_t i = _speed / 10;
+		uint8_t j = _speed % 10;
+		uint16_t delta = (_speed2angle[i + 1] - _speed2angle[i]);
 		
-		set_angle(_speed2angle[i] + j * delta / 10);
+		set_angle(_speed2angle[i] + (j * delta) / 10);
 		
-		/* Wyświetlanie przebiegu całkoitego */
+		/* Wyświetlanie przebiegu całkowitego */
 		for(i = 0; i < 6; i++) {
 			display_buf[i] = ' ';
 		}
 		
 		itoa(_odometer, tmpbuf, 10);
-		char len = strlen(tmpbuf);
+		//itoa(_speed, tmpbuf, 10);
+		uint8_t len = strlen(tmpbuf);
 		for(i = 0; i < len; i++)
 			display_buf[6 - len + i] = tmpbuf[i];
 			
@@ -323,7 +328,7 @@ int main(void) {
 void wdt_init(void) __attribute__((naked)) __attribute__((section(".init3")));
 
 void wdt_init(void) {
-    MCUSR = 0;
-    wdt_disable();
+	MCUSR = 0;
+	wdt_disable();
 	return;
 }

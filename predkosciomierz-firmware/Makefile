@@ -4,8 +4,7 @@ TARGET=predkosciomierz
 SOURCES=main.c display.c
 MCU=attiny2313
 F_CPU=8000000UL
-AVRDUDE_PROGRAMMER=stk200
-AVRDUDE_PORT=/dev/parport0
+AVRDUDE_PROGRAMMER=avrisp2
 VERSION=0.1
 
 CC=avr-gcc
@@ -34,7 +33,11 @@ install: program
 
 program: $(TARGET).hex
 	@echo " INSTALL $(TARGET).hex"
-	avrdude -i 10 -c $(AVRDUDE_PROGRAMMER) -p $(MCU) -U flash:w:$(TARGET).hex
+	avrdude -c $(AVRDUDE_PROGRAMMER) -p $(MCU) -U flash:w:$(TARGET).hex
+
+promgram-eeprom: $(TARGET).eep
+	@echo " INSTALL $(TARGET).eep"
+	avrdude -c $(AVRDUDE_PROGRAMMER) -p $(MCU) -U eeprom:w:$(TARGET).eep
 
 $(TARGET).elf: $(OBJECTS)
 	@echo " LD      $@"
