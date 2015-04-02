@@ -38,7 +38,10 @@
 #define IGNITION_STATE_PIN   PINB
 #define IGNITION_STATE_PINNO PB0
 
-#define IMPS_PER_100M    810
+#define IMPS_PER_100M        810
+
+#define RUNNING_MIN_IMPS     8 /* ~1m */
+#define IS_RUNNING()         (_running >= RUNNING_MIN_IMPS)
 
 static uint8_t _sin_value;
 static uint8_t _cos_value;
@@ -57,7 +60,7 @@ static uint16_t _speed;
 static uint16_t _imp_times[4];
 static uint8_t _last_time_idx;
 
-static char _stopped;
+static uint8_t _running;
 
 ISR(TIMER0_OVF_vect) {
 	static uint8_t counter = 0;
@@ -78,12 +81,12 @@ ISR(TIMER0_OVF_vect) {
 }
 
 ISR(TIMER1_OVF_vect) {
-	_speed = 0;
 	_imp_times[0] = 0xFFFF;
 	_imp_times[1] = 0xFFFF;
 	_imp_times[2] = 0xFFFF;
 	_imp_times[3] = 0xFFFF;
-	_stopped = 1;
+	
+	_running = 0;
 }
 
 ISR(INT0_vect) {
@@ -93,8 +96,10 @@ ISR(INT0_vect) {
 ISR(INT1_vect) {
 	_imps++;
 	
-	/* Nie zapisujemy jak dopiero ruszamy bo wychodza pierdoły */	 
-	if (!_stopped) {
+	if (!IS_RUNNING()) { /* Rozbieg */
+		_running++;
+	}	
+	else { 
 		_last_time_idx = (_last_time_idx + 1) % 4;
 		_imp_times[_last_time_idx] = TCNT1;
 		
@@ -103,9 +108,8 @@ ISR(INT1_vect) {
 			_imp_times[_last_time_idx] = 0xFFFF;
 	}
 	
-	_stopped = 0;
 	TCNT1 = 0;
-	
+
 	if (_imps >= IMPS_PER_100M) {
 		_odometer_meters++;
 		if (_odometer_meters >= 10) {
@@ -120,18 +124,17 @@ ISR(INT1_vect) {
 }
 
 ISR(ANA_COMP_vect) {
-		eeprom_busy_wait();
-		eeprom_update_byte(&_ee_odometer_meters, _odometer_meters);
-		eeprom_busy_wait();
-		eeprom_update_dword(&_ee_odometer, _odometer);
-		eeprom_busy_wait();
-		eeprom_update_dword(&_ee_trip, _trip);
-	
-		/* Reset procesora */
-		cli();
-		wdt_enable(WDTO_15MS);
-		for(;;);
-	
+	eeprom_busy_wait();
+	eeprom_update_byte(&_ee_odometer_meters, _odometer_meters);
+	eeprom_busy_wait();
+	eeprom_update_dword(&_ee_odometer, _odometer);
+	eeprom_busy_wait();
+	eeprom_update_dword(&_ee_trip, _trip);
+
+	/* Reset procesora */
+	cli();
+	wdt_enable(WDTO_15MS);
+	for(;;);	
 }
 
 void init(void) {
@@ -258,7 +261,10 @@ int main(void) {
 	char display_buf[9];
 	char tmpbuf[7];
 	uint32_t imp_time;
-
+	uint16_t old_speed = 0;
+	uint16_t i, j;
+	uint8_t counter = 0;
+	
 	init();
 	display_init();
 	
@@ -266,60 +272,68 @@ int main(void) {
 	display_buf[7] = 'M';
 	display_buf[8] = '\0';
 	
-	while(1) {
+	while(1) {		
 		/* Obliczanie prędkości */
 		imp_time = (_imp_times[0] + _imp_times[1] + _imp_times[2] + _imp_times[3]) / 4;
 		
-		if ((!imp_time) || (_stopped)) {
+		if (!IS_RUNNING()) {
 			_speed = 0;
 		}
 		else {
 			_speed = ((F_CPU / 64) / imp_time);
-			_speed = _speed * 100 / 225;
+			_speed = _speed * 200 / 225;
 		}
 		
-		/* Obliczamy wychylenie wskazowki */
-		uint8_t i = _speed / 10;
-		uint8_t j = _speed % 10;
-		uint16_t delta = (_speed2angle[i + 1] - _speed2angle[i]);
+
+		/* Prędkośc wzrosła o 40km/h od ostatniego przeliczenia, niemożliwe...*/
+		if (_speed < old_speed + (40 * 2)) {
+			/* Obliczamy wychylenie wskazowki */
+			i = _speed / 20;
+			j = _speed % 20;
+			uint16_t delta = (_speed2angle[i + 1] - _speed2angle[i]);
 		
-		set_angle(_speed2angle[i] + (j * delta) / 10);
-		
-		/* Wyświetlanie przebiegu całkowitego */
-		for(i = 0; i < 6; i++) {
-			display_buf[i] = ' ';
-		}
-		
-		itoa(_odometer, tmpbuf, 10);
-		//itoa(_speed, tmpbuf, 10);
-		uint8_t len = strlen(tmpbuf);
-		for(i = 0; i < len; i++)
-			display_buf[6 - len + i] = tmpbuf[i];
+			set_angle(_speed2angle[i] + (j * delta) / 20);
 			
-		display_goto(0, 0);
-		display_puts(display_buf);
-		
-		/* Wyświetlanie przebiegu kasowalnego */
-		for(i = 0; i < 6; i++) {
-			display_buf[i] = ' ';
-		}
-		
-		itoa(_trip, tmpbuf, 10);
-		len = strlen(tmpbuf);
-		
-		display_buf[4] = '.';
-		display_buf[5] = tmpbuf[--len];
-		if (len > 0) {
+			old_speed = _speed;
+		}		
+
+		if ((counter++) % 16) {
+			/* Wyświetlanie przebiegu całkowitego */
+			for(i = 0; i < 6; i++) {
+				display_buf[i] = ' ';
+			}
+			
+			itoa(_odometer, tmpbuf, 10);
+			//itoa(_speed / 2, tmpbuf, 10);
+			uint8_t len = strlen(tmpbuf);
 			for(i = 0; i < len; i++)
-				display_buf[4 - len + i] = tmpbuf[i];
-		}
-		else {
-			display_buf[3] = '0';
-		}
-		
-		display_goto(0, 1);	
-		display_puts(display_buf);
-		
+				display_buf[6 - len + i] = tmpbuf[i];
+				
+			display_goto(0, 0);
+			display_puts(display_buf);
+			
+			/* Wyświetlanie przebiegu kasowalnego */
+			for(i = 0; i < 6; i++) {
+				display_buf[i] = ' ';
+			}
+					
+			itoa(_trip, tmpbuf, 10);
+			
+			len = strlen(tmpbuf);
+			
+			display_buf[4] = '.';
+			display_buf[5] = tmpbuf[--len];
+			if (len > 0) {
+				for(i = 0; i < len; i++)
+					display_buf[4 - len + i] = tmpbuf[i];
+			}
+			else {
+				display_buf[3] = '0';
+			}
+			
+			display_goto(0, 1);	
+			display_puts(display_buf);
+		}		
 	}
 	
 	return 0;

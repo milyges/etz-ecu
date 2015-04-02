@@ -381,12 +381,6 @@ UsedLibrary="/opt/eagle-5.11.0/lbr/elektro/e-symbole.lbr"
 UsedLibrary="/opt/eagle-5.11.0/lbr/elektro/eib-busch-jaeger.lbr"
 
 [Win_1]
-Type="Control Panel"
-Loc="0 0 953 997"
-State=0
-Number=0
-
-[Win_2]
 Type="Board Editor"
 Loc="0 0 953 997"
 State=2
@@ -424,6 +418,12 @@ ArcDirection=0
 AddLevel=2
 PadsSameType=0
 Layer=16
+
+[Win_2]
+Type="Control Panel"
+Loc="0 0 953 997"
+State=2
+Number=0
 
 [Win_3]
 Type="Schematic Editor"
