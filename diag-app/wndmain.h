@@ -5,6 +5,7 @@
 #include <QtSerialPort/QSerialPort>
 #include <QtSerialPort/QSerialPortInfo>
 #include <QTimer>
+#include <QFile>
 #include <stdint.h>
 
 #define PARAM_IGN_CUT_OFF_START  0
@@ -45,12 +46,15 @@ private slots:
     void _readImmoKeys(void);
     void _writeImmoKeys(void);
 
+    void _setLogFile(void);
+
 private:
     Ui::WndMain * _ui;
     QTimer * _connectTimer;
     QTimer * _liveDataTimer;
 
     QSerialPort * _serial;
+    QFile * _logFile;
 
     bool _ecuCommand(QByteArray command, uint8_t * exitCode, QByteArray * result);
     uint16_t _readEcuParam(int id);

@@ -2,6 +2,9 @@
 #include "ui_wndmain.h"
 #include <QDebug>
 #include <QMessageBox>
+#include <QFileDialog>
+#include <QFileInfo>
+#include <QDateTime>
 
 WndMain::WndMain(QWidget *parent) : QMainWindow(parent), _ui(new Ui::WndMain) {
     _ui->setupUi(this);
@@ -24,12 +27,21 @@ WndMain::WndMain(QWidget *parent) : QMainWindow(parent), _ui(new Ui::WndMain) {
     connect(_ui->pbReadParams, SIGNAL(clicked()), this, SLOT(_readParams()));
     connect(_ui->pbWriteParams, SIGNAL(clicked()), this, SLOT(_writeParams()));
     _ecuDisconnected();
+
+    _logFile = NULL;
+    _ui->lLogFileName->setText(QString::fromUtf8("Plik log: (brak)"));
+
+    connect(_ui->pbSelectFile, SIGNAL(clicked()), this, SLOT(_setLogFile()));
 }
 
 WndMain::~WndMain() {
     delete _connectTimer;
     delete _serial;
     delete _ui;
+
+    if (_logFile) {
+        delete _logFile;
+    }
 }
 
 void WndMain::changeEvent(QEvent *e) {
@@ -100,6 +112,7 @@ void WndMain::_scanPorts() {
 void WndMain::_updateLiveData() {
     QByteArray data;
     QStringList values;
+    QString logLine;
     int rpm;
 
     if (!_ecuCommand("d\r\n", NULL, &data)) {
@@ -112,10 +125,15 @@ void WndMain::_updateLiveData() {
         return;
     }
 
+
+    logLine.append(QDateTime::currentDateTime().toString("dd-MM-yyyy hh:mm:ss.zzz "));
+
     rpm = values[0].toInt();
     _ui->lRPM->setText(QString("%1 RPM").arg(rpm));
     _ui->lIgnitionAdvance->setText(QString::fromUtf8("%1 °").arg(values[1]));
     _ui->lCrankAccel->setText(values[2]);
+
+    logLine.append(QString::fromUtf8("%1 %2° %3").arg(rpm).arg(values[1]).arg(values[2]));
 
     /* Fancy podświetlanie aktywnego fragmentu mapy zapłonu */
     for(int col = 0; col < _ui->twIgnitionMap->columnCount(); col++) {
@@ -124,6 +142,7 @@ void WndMain::_updateLiveData() {
         for(int row = 0; row < _ui->twIgnitionMap->rowCount(); row++) {
             if (((rpm / 500) == col) && (row == _ui->cbCurrentMap->currentIndex())) {
                 color = QColor(Qt::green);
+                logLine.append(QString::fromUtf8(" %1°").arg(_ui->twIgnitionMap->item(row, col)->text()));
             }
             else {
                 color = QColor(Qt::white);
@@ -135,6 +154,11 @@ void WndMain::_updateLiveData() {
             }
             _ui->twIgnitionMap->item(row, col)->setBackgroundColor(color);
         }
+    }
+
+    logLine.append('\n');
+    if ((_ui->cbLogEnabled->isChecked()) && (_logFile) && (_logFile->isOpen())) {
+        _logFile->write(logLine.toUtf8());
     }
 }
 
@@ -269,6 +293,36 @@ void WndMain::_writeImmoKeys() {
 
     if (err != 0) {
         QMessageBox::critical(this, QString::fromUtf8("Zapis kodów immobilizera do ECU"), QString::fromUtf8("Błąd zapisu danych do ECU (kod błędu = %1)").arg(err));
+    }
+}
+
+void WndMain::_setLogFile() {
+    QFile * log;
+    if (_logFile) {
+        if (_logFile->isOpen()) {
+            _logFile->close();
+        }
+
+        log = _logFile;
+        _logFile = NULL;
+        delete log;
+    }
+
+    _ui->lLogFileName->setText(QString::fromUtf8("Plik log: (brak)"));
+    QString fileName = QFileDialog::getSaveFileName(this, QString::fromUtf8("Wybór pliku log"), "", "*.txt");
+    if (fileName.isEmpty())
+        return;
+
+    log = new QFile(fileName);
+
+    if (!log->open(QIODevice::WriteOnly | QIODevice::Text | QIODevice::Truncate)) {
+        QMessageBox::critical(this, QString::fromUtf8("Wybór pliku log"), QString::fromUtf8("Nie można otworzyć pliku %1 do zapisu!").arg(fileName));
+        delete log;
+
+    }
+    else {
+        _ui->lLogFileName->setText(QString::fromUtf8("Plik log: %1").arg(QFileInfo(fileName).fileName()));
+        _logFile = log;
     }
 }
 
